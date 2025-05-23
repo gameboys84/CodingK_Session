@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "T/fsl7FQVW7MFQz6Gl9dk7yfSjc7x2/1vvYZ3rwsVNCcJywmhcC8Kc58ZzNuJHNeGs6AnaHY6aeq/BFIpUBbOA==",
+  "dgSpecHash": "r7v4/wyLfdE=",
   "success": true,
-  "projectFilePath": "D:\\github\\CodingK_Session\\CodingK_Session\\test.ClientSession\\test.ClientSession.csproj",
+  "projectFilePath": "E:\\Git\\CodingK_SessionNi\\CodingK_Session\\test.ClientSession\\test.ClientSession.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\YAN\\.nuget\\packages\\kcp\\2.3.0\\kcp.2.3.0.nupkg.sha512",
-    "C:\\Users\\YAN\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\5.0.14\\microsoft.netcore.app.host.win-x64.5.0.14.nupkg.sha512"
+    "C:\\Users\\Administrator\\.nuget\\packages\\kcp\\2.3.0\\kcp.2.3.0.nupkg.sha512"
   ],
   "logs": []
 }
