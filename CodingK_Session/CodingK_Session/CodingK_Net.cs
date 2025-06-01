@@ -49,9 +49,12 @@ namespace CodingK_Session
 
         public void CloseClient()
         {
-
             clientSession?.CloseSession();
+        }
 
+        public bool IsConnected()
+        {
+            return clientSession != null && clientSession.IsConnected();
         }
 
         /// <summary>
@@ -70,7 +73,7 @@ namespace CodingK_Session
                 {
                     await Task.Delay(interal);
                     checkTimes += interal;
-                    if (clientSession != null && clientSession.IsConnected())
+                    if (IsConnected())
                     {
                         return true;
                     }
@@ -97,43 +100,53 @@ namespace CodingK_Session
                         break;
                     }
 
-                    result = await udp.ReceiveAsync();
-
-                    if (Equals(remotePoint, result.RemoteEndPoint))
+                    if (udp != null)
                     {
-                        uint sid = BitConverter.ToUInt32(result.Buffer, 0);
-                        if (sid == 0)
+                        result = await udp.ReceiveAsync();
+
+                        if (Equals(remotePoint, result.RemoteEndPoint))
                         {
-                            // sid数据
-                            if (clientSession != null && clientSession.IsConnected())
+                            // 如果考虑重连，就应该必须带上一些旧的信息，比如sesionid，和其它验证数据， 然后请求重连，验证通过就表示重连成功
+                            // 如果没有数据，就不能发送重连，而是新的建立连接的请求
+                            uint sid = BitConverter.ToUInt32(result.Buffer, 0);
+                            if (sid == 0)
                             {
-                                // 已经建立连接，初始化完成了却收到了多次sid，只以第一次收到的为准，所以丢弃！
-                                CodingK_SessionTool.Warn("Client is Init Done, Sid Surplus");
+                                // sid数据
+                                if (IsConnected())
+                                {
+                                    // 已经建立连接，初始化完成了却收到了多次sid，只以第一次收到的为准，所以丢弃！
+                                    // 可能原因是发了多个 sid = 0 的消息
+                                    CodingK_SessionTool.Warn("Client is Init Done, Sid Surplus");
+                                }
+                                else
+                                {
+                                    // 未初始化，收到服务器分配的sid数据，初始化一个客户端session
+                                    sid = BitConverter.ToUInt32(result.Buffer, 4);
+                                    CodingK_SessionTool.ColorLog(CodingK_LogColor.Green, "Udp Request Conv sid:{0}", sid);
+
+                                    // 会话处理
+                                    clientSession = new T();
+                                    clientSession.InitSession(sid, SendUDPMsg, remotePoint, _protocolMode);
+                                    clientSession.OnSessionClose = OnClientSessionClose;
+                                }
                             }
                             else
                             {
-                                // 未初始化，收到服务器分配的sid数据，初始化一个客户端session
-                                sid = BitConverter.ToUInt32(result.Buffer, 4);
-                                CodingK_SessionTool.ColorLog(CodingK_LogColor.Green, "Udp Request Conv Sid:{0}", sid);
-
-                                // 会话处理
-                                clientSession = new T();
-                                clientSession.InitSession(sid, SendUDPMsg, remotePoint, _protocolMode);
-                                clientSession.OnSessionClose = OnClientSessionClose;
+                                if (IsConnected())
+                                {
+                                    // 处理业务逻辑数据
+                                    clientSession.ReceiveData(result.Buffer);
+                                }
+                                else
+                                {
+                                    // 没初始化且sid!=0时，数据消息提前到了，直接丢弃，直到初始化完成后会重传
+                                    CodingK_SessionTool.Warn("Client is Initing...{0}", sid);
+                                }
                             }
                         }
                         else
                         {
-                            if (clientSession != null && clientSession.IsConnected())
-                            {
-                                // 处理业务逻辑数据
-                                clientSession.ReceiveData(result.Buffer);
-                            }
-                            else
-                            {
-                                // 没初始化且sid!=0时，数据消息提前到了，直接丢弃，直到初始化完成后会重传
-                                CodingK_SessionTool.Warn("Client is Initing...{0}", sid);
-                            }
+                            CodingK_SessionTool.Warn("Client Udp Receive Data, remotePoint is diff:{0}, {1}:{2}", remotePoint, result.RemoteEndPoint.Address, result.RemoteEndPoint.Port);
                         }
                     }
                     else

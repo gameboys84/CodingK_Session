@@ -31,11 +31,11 @@ namespace test.ClientSession
             if (msg.Cmd == CMD.RspLogin)
             {
                 var datas = msg.RspLogin.Info[0];
-                CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "From Server:Sid:{0}, Datas:{1} {2} {3}", m_sessionId, datas.Lv, datas.Exp, datas.Money);
+                CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "From Server:sid:{0}, Datas:{1} {2} {3}", m_sessionId, datas.Lv, datas.Exp, datas.Money);
             }
             else
             {
-                CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "From Server:Sid:{0}, Msg:{1}", m_sessionId, msg.Info);
+                CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "From Server:sid:{0}, Msg:{1}", m_sessionId, msg.Info);
             }
         }
     }

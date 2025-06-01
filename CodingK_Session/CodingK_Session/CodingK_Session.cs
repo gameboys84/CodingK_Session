@@ -41,6 +41,9 @@ namespace CodingK_Session
         private CancellationTokenSource cts;
         private CancellationToken ct;
 
+        private DateTime lastRecvTick;
+        private int errorCount = 0;
+
 
         public void InitSession(uint sid, Action<byte[], IPEndPoint> udpSender, IPEndPoint remotePoint, CodingK_ProtocolMode mode = CodingK_ProtocolMode.Proto , Func<T, byte[]> _serialize = null, Func<byte[], T> _deSerialize = null)
         {
@@ -72,6 +75,8 @@ namespace CodingK_Session
             m_kcp.NoDelay(1, 10, 2, 1);
             m_kcp.WndSize(64, 64);
             m_kcp.SetMtu(512);
+
+            lastRecvTick = DateTime.Now;
 
             m_handle.Out = (Memory<byte> buffer) =>
             {
@@ -118,7 +123,24 @@ namespace CodingK_Session
                             var buffer = new byte[len];
                             if (m_kcp.Recv(buffer) >= 0)
                             {
+                                errorCount = 0;
+                                lastRecvTick = now;
                                 m_handle.Receive(buffer);
+                            }
+                        }
+
+                        TimeSpan differ = now - lastRecvTick;
+                        if (differ.Seconds > 6) // 客户端的心跳发送频率为5s/次
+                        {
+                            errorCount++;
+                            lastRecvTick = now;
+
+                            CodingK_SessionTool.Warn("Session Update Error sid:{0}, errCount:{1}, {2:F2}s no req received", m_sessionId, errorCount, differ.TotalSeconds);
+                            if (errorCount >= 3)
+                            {
+                                // 连接超过3次都没收到任何消息，包括心跳，主动断开连接
+                                CloseSession();
+                                break;
                             }
                         }
 
@@ -149,7 +171,7 @@ namespace CodingK_Session
             }
             else
             {
-                CodingK_SessionTool.Warn("Session Disconnected.Cannot send Msg.");
+                CodingK_SessionTool.Warn("Session Disconnected.Cannot send Msg. Try to Reconnected");
             }
         }
 
@@ -168,6 +190,7 @@ namespace CodingK_Session
 
         public void CloseSession()
         {
+            CodingK_SessionTool.ColorLog(CodingK_LogColor.Red, "CloseSession, Task is Cancelled.");
             OnDisConnected();
             OnSessionClose?.Invoke(m_sessionId);
 

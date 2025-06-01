@@ -45,7 +45,7 @@ namespace test.ServerSession
 
         protected override void OnReceiveMsg(NetMsg msg)
         {
-            CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "Get Msg from client. Sid:{0}, CMD:{1}, Msg:{2}", m_sessionId, msg.Cmd, msg.Info);
+            CodingK_SessionTool.ColorLog(CodingK_LogColor.Magenta, "Get Msg from client. sid:{0}, CMD:{1}, Msg:{2}", m_sessionId, msg.Cmd, msg.Info);
 
             if (msg.Cmd == CMD.Ping)
             {

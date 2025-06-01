@@ -77,7 +77,8 @@ namespace CodingK_Session
         private static void ConsoleLog(string msg, CodingK_LogColor color)
         {
             int tid = Thread.CurrentThread.ManagedThreadId;
-            msg = string.Format("Thread:{0} {1}", tid, msg);
+            string formattedTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff");
+            msg = string.Format("[Thread:{0} {1}] {2}", formattedTime, tid, msg);
 
             switch (color)
             {
